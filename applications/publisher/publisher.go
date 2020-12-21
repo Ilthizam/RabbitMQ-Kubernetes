@@ -8,6 +8,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
+
 )
 
 var rabbit_host = os.Getenv("RABBIT_HOST")
