@@ -21,6 +21,8 @@ var rabbit_port = os.Getenv("RABBIT_PORT")
 var rabbit_user = os.Getenv("RABBIT_USERNAME")
 var rabbit_password = os.Getenv("RABBIT_PASSWORD")
 
+var m = make(map[string]amqp.Delivery)
+
 func main() {
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
@@ -34,6 +36,7 @@ func main() {
 	}
 
 	consume(clientset)
+
 }
 
 func consume(clientset *kubernetes.Clientset) {
@@ -84,12 +87,13 @@ func consume(clientset *kubernetes.Clientset) {
 
 	forever := make(chan bool)
 	// jobList, _ := clientset.BatchV1().Jobs("rabbits").List(context.TODO(), metav1.ListOptions{})
+
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
 
 			// createDeployment(clientset)
-			createJob(clientset)
+			createJob(clientset, d)
 
 			// jobList.Reset()
 			// jobList, _ = clientset.BatchV1().Jobs("rabbits").List(context.TODO(), metav1.ListOptions{})
@@ -129,6 +133,7 @@ func consume(clientset *kubernetes.Clientset) {
 
 	fmt.Println("Running...")
 	<-forever
+
 }
 func deleteJob(clientset *kubernetes.Clientset, job batchv1.Job, d amqp.Delivery) {
 	err := clientset.BatchV1().Jobs("rabbits").Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
@@ -151,7 +156,11 @@ func printJobs(clientset *kubernetes.Clientset) {
 	fmt.Println("Jobs:")
 
 	for _, job := range jobList.Items {
-		fmt.Printf("- %d\n", job.Status.Succeeded)
+		// fmt.Printf("- %d\n", job.Status.Succeeded)
+		if job.Status.Succeeded == 1 {
+
+			deleteJob(clientset, job, m[job.Name])
+		}
 	}
 
 	fmt.Println("")
@@ -276,7 +285,7 @@ func createDeployment(clientset *kubernetes.Clientset) {
 	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
 }
 
-func createJob(clientset *kubernetes.Clientset) {
+func createJob(clientset *kubernetes.Clientset, d amqp.Delivery) {
 	jobsClient := clientset.BatchV1().Jobs("rabbits")
 
 	job := &batchv1.Job{
@@ -312,8 +321,8 @@ func createJob(clientset *kubernetes.Clientset) {
 		fmt.Println(err1)
 		panic(err1)
 	}
-
-	fmt.Printf("Created job %q.\n", result1)
+	m[result1.Name] = d
+	fmt.Printf("Created job %q.\n", result1.Name)
 }
 
 func int32Ptr(i int32) *int32 { return &i }

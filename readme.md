@@ -22,7 +22,7 @@ docker build . -t aimvector/rabbitmq-publisher:v1.0.0
 kubectl apply -n rabbits -f deployment.yaml
 
 kubectl -n rabbits port-forward <name> 8081:15672
-kubectl -n rabbits port-forward <name> 8081:80
+kubectl -n rabbits port-forward  8081:80
 
 ---
 
