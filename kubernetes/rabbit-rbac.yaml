@@ -12,11 +12,14 @@ rules:
     - ""
     - "apps"
     - "batch"
+    - "tekton.dev"
   resources: 
     - endpoints
     - deployments
     - pods
     - jobs
+    - tasks
+    - taskruns
   verbs: 
     - get
     - list
@@ -37,3 +40,5 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: rabbitmq
+
+

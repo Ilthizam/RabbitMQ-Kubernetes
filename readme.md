@@ -11,7 +11,7 @@ kubectl apply -n rabbits -f .\kubernetes\rabbit-secret.yaml
 kubectl apply -n rabbits -f .\kubernetes\rabbit-statefulset.yaml
 
 ---
-
+    
 kubectl -n rabbits port-forward rabbitmq-0 8080:15672
 
 ---

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -11,6 +12,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -93,12 +95,13 @@ func consume(clientset *kubernetes.Clientset) {
 			log.Printf("Received a message: %s", d.Body)
 
 			// createDeployment(clientset)
-			createJob(clientset, d)
+			
+			createJob(d)
 
 			// jobList.Reset()
 			// jobList, _ = clientset.BatchV1().Jobs("rabbits").List(context.TODO(), metav1.ListOptions{})
 
-			printJobs(clientset)
+			// printJobs(clientset)
 			// printNodes(clientset)
 			// printNamespaces(clientset)
 			// printJobsInDefaultNamespace(clientset)
@@ -107,21 +110,21 @@ func consume(clientset *kubernetes.Clientset) {
 			// for {
 			// 	for _, job := range jobList.Items {
 
-			// 		if job.Status.Active > 0 {
-			// 			fmt.Printf("Running - %s\n", job.Name)
-			// 		} else {
-			// 			if job.Status.Succeeded > 0 {
+			// if job.Status.Active > 0 {
+			// 	fmt.Printf("Running - %s\n", job.Name)
+			// } else {
+			// 	if job.Status.Succeeded > 0 {
 
-			// 				fmt.Println("Deletion Started")
-			// 				deleteJob(clientset, job, d)
-			// 				fmt.Println("Deletion Ended")
-			// 				jobList.Reset()
-			// 				jobList, _ = clientset.BatchV1().Jobs("rabbits").List(context.TODO(), metav1.ListOptions{})
+			// 		fmt.Println("Deletion Started")
+			// 		deleteJob(clientset, job, d)
+			// 		fmt.Println("Deletion Ended")
+			// 		jobList.Reset()
+			// 		jobList, _ = clientset.BatchV1().Jobs("rabbits").List(context.TODO(), metav1.ListOptions{})
 
-			// 			} else {
-			// 				fmt.Printf("Failed - %s\n", job.Name)
-			// 			}
-			// 		}
+			// 	} else {
+			// 		fmt.Printf("Failed - %s\n", job.Name)
+			// 	}
+			// }
 
 			// 	}
 			// 	jobList.Reset()
@@ -135,6 +138,15 @@ func consume(clientset *kubernetes.Clientset) {
 	<-forever
 
 }
+
+func spawnJobWatcher(clientset *kubernetes.Clientset) (<-chan (watch.Event), error) {
+	watcher, err := clientset.BatchV1().Jobs("").Watch(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return watcher.ResultChan(), nil
+}
+
 func deleteJob(clientset *kubernetes.Clientset, job batchv1.Job, d amqp.Delivery) {
 	err := clientset.BatchV1().Jobs("rabbits").Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
 	if err != nil {
@@ -285,44 +297,16 @@ func createDeployment(clientset *kubernetes.Clientset) {
 	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
 }
 
-func createJob(clientset *kubernetes.Clientset, d amqp.Delivery) {
-	jobsClient := clientset.BatchV1().Jobs("rabbits")
+func createJob(d amqp.Delivery) {
+	log.Printf("Create job funciton2")
+	out,err := exec.Command("tkn" ,"task" ,"start" ,"echo-hello-world" ,"--showlog").Output() 
 
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "my-job-",
-			Namespace:    "rabbits",
-		},
-		Spec: batchv1.JobSpec{
-			Template: apiv1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "my-job-",
-				},
-				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
-						{
-							Name:  "busybox",
-							Image: "busybox",
-							Command: []string{
-								"sleep",
-								"20",
-							},
-						},
-					},
-					RestartPolicy: apiv1.RestartPolicyOnFailure,
-				},
-			},
-		},
-	}
 
-	fmt.Println("Creating job... ")
-	result1, err1 := jobsClient.Create(context.TODO(), job, metav1.CreateOptions{})
-	if err1 != nil {
-		fmt.Println(err1)
-		panic(err1)
-	}
-	m[result1.Name] = d
-	fmt.Printf("Created job %q.\n", result1.Name)
+    if err != nil {
+        log.Fatal(err)
+    }
+	log.Printf("%s",out)
+	
 }
 
 func int32Ptr(i int32) *int32 { return &i }
