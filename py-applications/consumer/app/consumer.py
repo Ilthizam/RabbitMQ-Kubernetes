@@ -12,6 +12,10 @@ def main():
 
     def callback(ch, method, properties, body):
         print(" [x] Received %r" % body.decode())
+        cmd=body.decode()
+        os.system("tkn task start echo-hello-world -n rabbits")
+
+
 
     channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)
 
