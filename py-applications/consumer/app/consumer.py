@@ -1,6 +1,6 @@
   
 #!/usr/bin/env python
-import pika, sys, os
+import pika, sys, os, subprocess
 
 def main():
     credentials = pika.PlainCredentials("guest", "guest")
@@ -12,9 +12,14 @@ def main():
 
     def callback(ch, method, properties, body):
         print(" [x] Received %r" % body.decode())
-        os.system(str(body.decode()))
 
+        result=subprocess.call(['sh', 'count.sh'])
 
+        if result>2:
+            os.system(str(body.decode()))
+
+        
+    
     channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)
 
     print(' [*] Waiting for messages. To exit press CTRL+C')
