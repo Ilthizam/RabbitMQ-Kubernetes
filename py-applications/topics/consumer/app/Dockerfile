@@ -9,5 +9,6 @@ RUN mkdir /app
 WORKDIR /app
 ADD . /app/
 RUN pip install pika
+RUN pip install kubernetes
 EXPOSE 5000
 CMD ["python", "/app/consumer.py"]

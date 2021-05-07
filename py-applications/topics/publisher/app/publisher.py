@@ -23,9 +23,14 @@ def run():
 
     routing_key = request.json['namespace']
     message = request.json['command']
+    
+    # data={
+    #     "namespace":routing_key,
+    #     "command":message
+    # }
 
     channel.basic_publish(
-        exchange='topic_logs', routing_key=routing_key, body=message)
+        exchange='topic_logs', routing_key=routing_key, body=routing_key)
 
     print(" [x] Sent %r:%r" % (routing_key, message))
 
