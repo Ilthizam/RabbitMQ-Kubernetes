@@ -1,3 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-consumer
+type: Opaque
+data:
+  RABBIT_USERNAME: Z3Vlc3Q=
+  RABBIT_PASSWORD: Z3Vlc3Q=
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,6 +30,29 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        env:
+        - name: RABBIT_HOST
+          value: "rabbitmq-0.rabbitmq.rabbits.svc.cluster.local"
+        - name: RABBIT_PORT
+          value: "5672"
+        - name: RABBIT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-consumer
+              key: RABBIT_USERNAME
+        - name: RABBIT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-consumer
+              key: RABBIT_PASSWORD
+        volumeMounts:
+          - name: config
+            mountPath: "/config"
+      volumes:
+          - name: config
+            configMap:
+              name: "ci-config"  
+      
        
 # ---
 # apiVersion: v1

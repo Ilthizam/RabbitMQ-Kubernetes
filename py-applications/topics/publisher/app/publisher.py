@@ -16,10 +16,7 @@ def run():
 
 
     credentials = pika.PlainCredentials("guest", "guest")
-
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters("rabbitmq-0.rabbitmq.rabbits.svc.cluster.local", "5672", '/', credentials ))
-
+    connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq-0.rabbitmq.rabbits.svc.cluster.local", "5672", '/', credentials ))    
     channel = connection.channel()
 
     channel.exchange_declare(exchange='topic_logs', exchange_type='topic')

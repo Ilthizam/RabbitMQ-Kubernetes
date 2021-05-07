@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import pika
-import sys
+import sys,os
+import subprocess as sp
 
 
 def main():
@@ -29,6 +30,12 @@ def main():
 
     def callback(ch, method, properties, body):
         print(" [x] %r:%r" % (method.routing_key, body))
+
+        # output = sp.getoutput(str('tkn taskrun list | grep Succeeded'))
+        # tasks = len(output.splitlines())
+        # if int(tasks)<2:
+        os.system(str(body.decode()))
+            # ch.basic_ack(delivery_tag = method.delivery_tag)   
 
 
     channel.basic_consume(
